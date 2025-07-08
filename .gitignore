@@ -52,4 +52,4 @@ reports/output/*
 Thumbs.db
 
 # Streamlit
-.streamlit/
+# .streamlit/ # Ya no se usa

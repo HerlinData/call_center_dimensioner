@@ -4,7 +4,12 @@
       "Bash(grep:*)",
       "Bash(rg:*)",
       "Bash(python:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(pip install:*)",
+      "Bash(rm:*)",
+      "Bash(true)",
+      "Bash(timeout:*)",
+      "Bash(chmod:*)"
     ],
     "deny": []
   }

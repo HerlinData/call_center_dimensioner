@@ -1,5 +1,5 @@
-# Core dependencies
-streamlit>=1.28.0
+# Core dependencies - Flet Application
+flet>=0.21.0
 pandas>=2.0.0
 numpy>=1.24.0
 sqlalchemy>=2.0.0
@@ -19,11 +19,7 @@ python-dotenv>=1.0.0
 # Security dependencies
 bcrypt>=4.0.1
 cryptography>=41.0.0
-pyjwt>=2.8.0
 
-# Development and testing
+# Development and testing (optional)
 pytest>=7.4.0
 pytest-cov>=4.1.0
-
-# Logging and monitoring
-logging>=0.4.9.6

@@ -1,9 +1,9 @@
 """
-Configuración del sistema
+Configuración del sistema - Flet Application
 """
 
 from .database import DatabaseConfig
 from .settings import AppSettings
-from .auth import AuthManager
+from .auth_flet import auth_manager
 
-__all__ = ['DatabaseConfig', 'AppSettings', 'AuthManager']
+__all__ = ['DatabaseConfig', 'AppSettings', 'auth_manager']

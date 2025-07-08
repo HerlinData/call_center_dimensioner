@@ -1,5 +1,6 @@
 """
-Módulo de interfaz de usuario
+Módulo de interfaz de usuario - Flet
 """
 
-# Módulo de UI para Streamlit
+# Interfaces disponibles:
+# - flet_dashboard.py: Dashboard principal para análisis de datos
