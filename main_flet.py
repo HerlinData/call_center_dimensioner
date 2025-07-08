@@ -296,618 +296,86 @@ class CallCenterApp:
         self.page.update()
 
     def show_mode_selection(self):
-        """Mostrar selección de modo de campaña"""
+        """Mostrar selección de modo de campaña con el estilo profesional."""
         self.page.clean()
         
-        # Contenido principal centrado con elementos de vida
-        main_content = ft.Container(
+        # Header
+        header = ft.Container(
             content=ft.Column([
-                # Header profesional con vida
-                ft.Container(
-                    content=ft.Column([
-                        # Ícono corporativo animado
-                        ft.Container(
-                            content=ft.Text(
-                                "📊",
-                                size=50,
-                                text_align=ft.TextAlign.CENTER
-                            ),
-                            animate=1000,
-                            on_hover=lambda e: self.animate_header_icon_hover(e)
-                        ),
-                        
-                        # Título principal
-                        ft.Text(
-                            "Selecciona el Modo de Operación",
-                            size=32,
-                            weight=ft.FontWeight.BOLD,
-                            color=self.colors['text'],
-                            text_align=ft.TextAlign.CENTER
-                        ),
-                        
-                        # Subtítulo
-                        ft.Text(
-                            "Elige el tipo de análisis para tu dimensionamiento",
-                            size=16,
-                            color=self.colors['text_secondary'],
-                            text_align=ft.TextAlign.CENTER
-                        ),
-                        
-                        # Línea separadora con acento
-                        ft.Container(
-                            width=80,
-                            height=3,
-                            bgcolor=self.colors['accent'],
-                            border_radius=2,
-                            margin=ft.margin.symmetric(vertical=25)
-                        )
-                    ], 
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=10),
-                    margin=ft.margin.only(bottom=40),
-                    animate=800
+                ft.Text(
+                    "📊 Selecciona el Modo de Operación",
+                    size=32,
+                    weight=ft.FontWeight.BOLD,
+                    color=self.colors['text'],
+                    text_align=ft.TextAlign.CENTER
                 ),
-                
-                # Cards de selección con vida corporativa
-                ft.Row([
-                    # Campaña Existente
-                    self.create_corporate_mode_card(
-                        icon="📈",
-                        title="Analizar Campaña Existente",
-                        subtitle="Basado en datos históricos",
-                        description="Utiliza información real de tu base de datos SQL Server para obtener dimensionamientos precisos y validados.",
-                        features=[
-                            "Análisis de datos históricos reales",
-                            "Validación automática de modelos", 
-                            "Múltiples escenarios basados en patrones",
-                            "Comparación predicho vs real"
-                        ],
-                        button_text="Usar Datos Históricos",
-                        card_color=self.colors['primary'],
-                        on_click=lambda e: self.select_mode('existente')
-                    ),
-                    
-                    # Campaña Nueva
-                    self.create_corporate_mode_card(
-                        icon="🚀",
-                        title="Dimensionar Campaña Nueva",
-                        subtitle="Para operaciones sin historial",
-                        description="Diseña el dimensionamiento para una nueva campaña utilizando parámetros estimados y mejores prácticas.",
-                        features=[
-                            "Inputs manuales de volumen y TMO",
-                            "Cálculos basados en teoría Erlang C",
-                            "Escenarios optimista y conservador", 
-                            "Recomendaciones para nueva operación"
-                        ],
-                        button_text="Nueva Campaña",
-                        card_color=self.colors['secondary'],
-                        on_click=lambda e: self.select_mode('nueva')
-                    )
-                ], 
-                alignment=ft.MainAxisAlignment.CENTER,
-                spacing=40),
-                
-                # Footer informativo con vida
-                ft.Container(
-                    content=ft.Row([
-                        ft.Icon("info", size=16, color=self.colors['accent']),
-                        ft.Text(
-                            "Ambos modos generan reportes profesionales exportables a Excel",
-                            size=14,
-                            color=self.colors['text_secondary'],
-                            italic=True
-                        )
-                    ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
-                    margin=ft.margin.only(top=40),
-                    animate=1200
+                ft.Text(
+                    "Elige si analizarás una campaña existente o dimensionarás una nueva",
+                    size=16,
+                    color=self.colors['text_secondary'],
+                    text_align=ft.TextAlign.CENTER
                 )
-                
             ], 
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=0),
-            
-            alignment=ft.alignment.center,
-            expand=True,
-            padding=ft.padding.all(40),
-            bgcolor=self.colors['background']
+            spacing=10),
+            padding=40
         )
         
-        # Botón logout moderno
-        logout_btn = ft.Container(
-            content=ft.Container(
-                content=ft.Row([
-                    ft.Icon("logout", size=18, color=self.colors['text']),
-                    ft.Text("Salir", size=14, color=self.colors['text'], weight=ft.FontWeight.W_500)
-                ], spacing=8),
-                padding=ft.padding.symmetric(horizontal=16, vertical=10),
-                border_radius=25,
-                bgcolor=self.colors['surface'],
-                border=ft.border.all(1, self.colors['accent']),
-                shadow=ft.BoxShadow(
-                    spread_radius=0,
-                    blur_radius=4,
-                    color="#00000008",
-                    offset=ft.Offset(0, 2)
-                ),
-                animate=200,
-                on_click=lambda e: self.logout(),
-                ink=True
+        # Cards de selección en fila
+        cards_row = ft.Row([
+            # Campaña Existente
+            self.create_selection_card(
+                title="📈 Campaña Existente",
+                subtitle="Análisis basado en datos históricos",
+                features=[
+                    "• Conexión a SQL Server",
+                    "• Validación automática de modelos",
+                    "• Múltiples escenarios (promedio, pico, etc.)",
+                    "• Ideal para optimizar operaciones actuales"
+                ],
+                color=self.colors['primary'],
+                button_text="Analizar Existente",
+                on_click_handler=lambda e: self.select_mode('existente')
             ),
-            alignment=ft.alignment.top_right,
-            padding=25
-        )
+            
+            # Campaña Nueva
+            self.create_selection_card(
+                title="🚀 Campaña Nueva", 
+                subtitle="Dimensionamiento para nuevas operaciones",
+                features=[
+                    "• Inputs manuales de volumen y TMO",
+                    "• Cálculos basados en Erlang C",
+                    "• Escenarios optimista y conservador",
+                    "• Ideal para planificar nuevos servicios"
+                ],
+                color=self.colors['secondary'],
+                button_text="Dimensionar Nueva",
+                on_click_handler=lambda e: self.select_mode('nueva')
+            )
+        ], 
+        alignment=ft.MainAxisAlignment.CENTER,
+        spacing=40)
         
-        # Layout final
+        # Layout principal
+        main_content = ft.Column([
+            header,
+            ft.Container(cards_row, padding=ft.padding.symmetric(horizontal=50), expand=True, alignment=ft.alignment.center)
+        ], expand=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+        
+        # Botón de logout
+        logout_btn = ft.Container(
+            content=ft.TextButton("Cerrar Sesión", icon="logout", on_click=lambda e: self.logout()),
+            alignment=ft.alignment.top_right,
+            padding=20
+        )
+
         page_layout = ft.Stack([
             main_content,
             logout_btn
         ])
-        
+
         self.page.add(page_layout)
         self.page.update()
-
-    def create_mode_card(self, title, subtitle, features, color, on_click):
-        """Crear card de selección de modo"""
-        return ft.Container(
-            content=ft.Column([
-                # Título
-                ft.Text(
-                    title,
-                    size=20,
-                    weight=ft.FontWeight.BOLD,
-                    color=color,
-                    text_align=ft.TextAlign.CENTER
-                ),
-                
-                # Subtítulo
-                ft.Text(
-                    subtitle,
-                    size=14,
-                    color="#495057",
-                    text_align=ft.TextAlign.CENTER
-                ),
-                
-                # Características
-                ft.Container(
-                    content=ft.Column([
-                        ft.Text("✅ Incluye:", weight=ft.FontWeight.BOLD, size=14),
-                        *[ft.Text(feature, size=12) for feature in features]
-                    ], spacing=5),
-                    margin=ft.margin.symmetric(vertical=15)
-                ),
-                
-                # Botón
-                ft.ElevatedButton(
-                    title.split()[0] + " " + ("Usar Datos Históricos" if "Existente" in title else "Nueva Campaña"),
-                    width=280,
-                    height=45,
-                    bgcolor=color,
-                    color="white",
-                    style=ft.ButtonStyle(
-                        shape=ft.RoundedRectangleBorder(radius=10),
-                        elevation={"": 3, "hovered": 8}
-                    ),
-                    on_click=on_click
-                )
-            ], 
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=15),
-            
-            width=320,
-            padding=25,
-            bgcolor="#ffffff",
-            border_radius=15,
-            border=ft.border.all(2, color),
-            shadow=ft.BoxShadow(
-                spread_radius=0,
-                blur_radius=8,
-                color=f"{color}1a",  # 10% opacity
-                offset=ft.Offset(0, 4)
-            ),
-            animate=300,
-            on_hover=lambda e: self.animate_card_hover(e)
-        )
-
-    def create_corporate_mode_card(self, icon, title, subtitle, description, features, button_text, card_color, on_click):
-        """Crear card corporativa con vida"""
-        return ft.Container(
-            content=ft.Column([
-                # Header con ícono corporativo
-                ft.Container(
-                    content=ft.Column([
-                        # Ícono animado
-                        ft.Container(
-                            content=ft.Text(
-                                icon,
-                                size=40,
-                                text_align=ft.TextAlign.CENTER
-                            ),
-                            animate=600,
-                            on_hover=lambda e: self.animate_card_icon_hover(e)
-                        ),
-                        
-                        # Título principal
-                        ft.Text(
-                            title,
-                            size=20,
-                            weight=ft.FontWeight.BOLD,
-                            color=self.colors['text'],
-                            text_align=ft.TextAlign.CENTER
-                        ),
-                        
-                        # Subtítulo con color corporativo
-                        ft.Text(
-                            subtitle,
-                            size=14,
-                            color=card_color,
-                            text_align=ft.TextAlign.CENTER,
-                            weight=ft.FontWeight.W_500
-                        )
-                    ], 
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=8),
-                    margin=ft.margin.only(bottom=20)
-                ),
-                
-                # Descripción
-                ft.Container(
-                    content=ft.Text(
-                        description,
-                        size=13,
-                        color=self.colors['text_secondary'],
-                        text_align=ft.TextAlign.CENTER
-                    ),
-                    margin=ft.margin.only(bottom=20)
-                ),
-                
-                # Lista de características con estilo corporativo
-                ft.Container(
-                    content=ft.Column([
-                        ft.Text("Características principales:", 
-                               weight=ft.FontWeight.BOLD, 
-                               size=14, 
-                               color=card_color),
-                        ft.Container(height=8),
-                        *[ft.Row([
-                            ft.Icon("check_circle", size=16, color=card_color),
-                            ft.Text(feature, size=12, color=self.colors['text_secondary'])
-                        ], spacing=8) for feature in features]
-                    ], spacing=3),
-                    padding=ft.padding.all(15),
-                    bgcolor=f"{card_color}10",
-                    border_radius=10,
-                    border=ft.border.all(1, f"{card_color}40"),
-                    margin=ft.margin.only(bottom=25)
-                ),
-                
-                # Botón de acción corporativo
-                ft.Container(
-                    content=ft.ElevatedButton(
-                        content=ft.Row([
-                            ft.Text(button_text, size=15, weight=ft.FontWeight.BOLD)
-                        ], alignment=ft.MainAxisAlignment.CENTER),
-                        width=280,
-                        height=45,
-                        bgcolor=card_color,
-                        color="white",
-                        style=ft.ButtonStyle(
-                            shape=ft.RoundedRectangleBorder(radius=10),
-                            elevation={"": 3, "hovered": 8, "pressed": 1}
-                        ),
-                        on_click=on_click
-                    ),
-                    animate=300
-                )
-            ], 
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=0),
-            
-            # Estilo de la card corporativa
-            width=350,
-            padding=25,
-            bgcolor="#ffffff",
-            border_radius=15,
-            border=ft.border.all(2, f"{card_color}30"),
-            shadow=ft.BoxShadow(
-                spread_radius=0,
-                blur_radius=15,
-                color=f"{card_color}20",
-                offset=ft.Offset(0, 4)
-            ),
-            animate=400,
-            on_hover=lambda e: self.animate_corporate_card_hover(e, card_color)
-        )
-
-    def create_professional_mode_card(self, title, subtitle, description, features, button_text, on_click):
-        """Crear card profesional de selección de modo"""
-        return ft.Container(
-            content=ft.Column([
-                # Header de la card
-                ft.Container(
-                    content=ft.Column([
-                        # Título principal
-                        ft.Text(
-                            title,
-                            size=20,
-                            weight=ft.FontWeight.BOLD,
-                            color=self.colors['text'],
-                            text_align=ft.TextAlign.CENTER
-                        ),
-                        
-                        # Subtítulo
-                        ft.Text(
-                            subtitle,
-                            size=14,
-                            color="#6c757d",
-                            text_align=ft.TextAlign.CENTER
-                        )
-                    ], 
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=5),
-                    margin=ft.margin.only(bottom=20)
-                ),
-                
-                # Descripción
-                ft.Container(
-                    content=ft.Text(
-                        description,
-                        size=13,
-                        color=self.colors['text_secondary'],
-                        text_align=ft.TextAlign.CENTER
-                    ),
-                    margin=ft.margin.only(bottom=25)
-                ),
-                
-                # Lista de características
-                ft.Container(
-                    content=ft.Column([
-                        ft.Text("Características principales:", 
-                               weight=ft.FontWeight.BOLD, 
-                               size=14, 
-                               color="#212529"),
-                        ft.Container(height=10),
-                        *[ft.Row([
-                            ft.Icon("check_circle", size=16, color="#28a745"),
-                            ft.Text(feature, size=12, color=self.colors['text_secondary'])
-                        ], spacing=8) for feature in features]
-                    ], spacing=3),
-                    padding=ft.padding.all(15),
-                    bgcolor="#f8f9fa",
-                    border_radius=8,
-                    border=ft.border.all(1, "#e9ecef"),
-                    margin=ft.margin.only(bottom=25)
-                ),
-                
-                # Botón de acción
-                ft.ElevatedButton(
-                    button_text,
-                    width=280,
-                    height=45,
-                    bgcolor="#007bff",
-                    color="white",
-                    style=ft.ButtonStyle(
-                        shape=ft.RoundedRectangleBorder(radius=8),
-                        elevation={"": 2, "hovered": 4}
-                    ),
-                    on_click=on_click
-                )
-            ], 
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=0),
-            
-            # Estilo de la card profesional
-            width=350,
-            padding=25,
-            bgcolor="#ffffff",
-            border_radius=12,
-            border=ft.border.all(1, "#dee2e6"),
-            shadow=ft.BoxShadow(
-                spread_radius=0,
-                blur_radius=10,
-                color="#00000010",
-                offset=ft.Offset(0, 2)
-            )
-        )
-
-    def create_enhanced_mode_card(self, icon, title, subtitle, description, features, color, gradient_color, button_text, on_click):
-        """Crear card de selección de modo mejorada"""
-        return ft.Container(
-            content=ft.Column([
-                # Header de la card con ícono
-                ft.Container(
-                    content=ft.Column([
-                        # Ícono grande
-                        ft.Container(
-                            content=ft.Text(
-                                icon,
-                                size=50,
-                                text_align=ft.TextAlign.CENTER
-                            ),
-                            animate=800,
-                            on_hover=lambda e: self.animate_card_icon_hover(e)
-                        ),
-                        
-                        # Título principal
-                        ft.Text(
-                            title,
-                            size=22,
-                            weight=ft.FontWeight.BOLD,
-                            color=color,
-                            text_align=ft.TextAlign.CENTER
-                        ),
-                        
-                        # Subtítulo
-                        ft.Text(
-                            subtitle,
-                            size=14,
-                            color="#6c757d",
-                            text_align=ft.TextAlign.CENTER,
-                            weight=ft.FontWeight.W_400
-                        )
-                    ], 
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=8),
-                    margin=ft.margin.only(bottom=20)
-                ),
-                
-                # Descripción
-                ft.Container(
-                    content=ft.Text(
-                        description,
-                        size=13,
-                        color=self.colors['text_secondary'],
-                        text_align=ft.TextAlign.CENTER,
-                        weight=ft.FontWeight.W_300
-                    ),
-                    margin=ft.margin.only(bottom=20)
-                ),
-                
-                # Lista de características mejorada
-                ft.Container(
-                    content=ft.Column([
-                        ft.Text("✨ Características principales:", 
-                               weight=ft.FontWeight.BOLD, 
-                               size=14, 
-                               color=color),
-                        ft.Container(height=8),  # Spacer
-                        *[ft.Container(
-                            content=ft.Text(feature, size=12, color="#495057"),
-                            margin=ft.margin.only(bottom=4)
-                        ) for feature in features]
-                    ], spacing=2),
-                    padding=ft.padding.all(15),
-                    bgcolor=gradient_color,
-                    border_radius=10,
-                    border=ft.border.all(1, f"{color}30"),
-                    margin=ft.margin.only(bottom=25)
-                ),
-                
-                # Botón de acción principal
-                ft.Container(
-                    content=ft.ElevatedButton(
-                        content=ft.Row([
-                            ft.Text(button_text, size=15, weight=ft.FontWeight.BOLD)
-                        ], alignment=ft.MainAxisAlignment.CENTER),
-                        width=300,
-                        height=50,
-                        bgcolor=color,
-                        color="white",
-                        style=ft.ButtonStyle(
-                            shape=ft.RoundedRectangleBorder(radius=12),
-                            elevation={"": 4, "hovered": 12, "pressed": 2},
-                            animation_duration=200
-                        ),
-                        on_click=on_click
-                    ),
-                    animate=300
-                )
-            ], 
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=8),
-            
-            # Estilo de la card mejorada
-            width=380,
-            padding=30,
-            bgcolor="#ffffff",
-            border_radius=18,
-            border=ft.border.all(2, f"{color}20"),
-            shadow=ft.BoxShadow(
-                spread_radius=0,
-                blur_radius=20,
-                color=f"{color}15",
-                offset=ft.Offset(0, 8)
-            ),
-            animate=400,
-            on_hover=lambda e: self.animate_enhanced_card_hover(e, color)
-        )
-
-    def animate_card_hover(self, e):
-        """Animar card al hover"""
-        if e.data == "true":  # Mouse enter
-            e.control.elevation = 12
-            e.control.scale = 1.02
-        else:  # Mouse leave
-            e.control.elevation = 4
-            e.control.scale = 1.0
-        e.control.update()
-
-    def animate_logo_hover(self, e):
-        """Animar logo al hover"""
-        if e.data == "true":  # Mouse enter
-            e.control.scale = 1.1
-            e.control.rotate = 0.1
-        else:  # Mouse leave
-            e.control.scale = 1.0
-            e.control.rotate = 0
-        e.control.update()
-
-    def animate_icon_hover(self, e):
-        """Animar ícono al hover"""
-        if e.data == "true":  # Mouse enter
-            e.control.scale = 1.2
-            e.control.rotate = 0.2
-        else:  # Mouse leave
-            e.control.scale = 1.0
-            e.control.rotate = 0
-        e.control.update()
-
-    def animate_card_icon_hover(self, e):
-        """Animar ícono de card al hover"""
-        if e.data == "true":  # Mouse enter
-            e.control.scale = 1.3
-        else:  # Mouse leave
-            e.control.scale = 1.0
-        e.control.update()
-
-    def animate_enhanced_card_hover(self, e, color):
-        """Animar card mejorada al hover"""
-        if e.data == "true":  # Mouse enter
-            e.control.scale = 1.03
-            e.control.shadow = ft.BoxShadow(
-                spread_radius=0,
-                blur_radius=30,
-                color=f"{color}25",
-                offset=ft.Offset(0, 12)
-            )
-        else:  # Mouse leave
-            e.control.scale = 1.0
-            e.control.shadow = ft.BoxShadow(
-                spread_radius=0,
-                blur_radius=20,
-                color=f"{color}15",
-                offset=ft.Offset(0, 8)
-            )
-        e.control.update()
-
-    def animate_header_icon_hover(self, e):
-        """Animar ícono del header al hover"""
-        if e.data == "true":  # Mouse enter
-            e.control.scale = 1.2
-            e.control.rotate = 0.1
-        else:  # Mouse leave
-            e.control.scale = 1.0
-            e.control.rotate = 0
-        e.control.update()
-
-    def animate_corporate_card_hover(self, e, color):
-        """Animar card corporativa al hover"""
-        if e.data == "true":  # Mouse enter
-            e.control.scale = 1.02
-            e.control.shadow = ft.BoxShadow(
-                spread_radius=0,
-                blur_radius=20,
-                color=f"{color}30",
-                offset=ft.Offset(0, 8)
-            )
-        else:  # Mouse leave
-            e.control.scale = 1.0
-            e.control.shadow = ft.BoxShadow(
-                spread_radius=0,
-                blur_radius=15,
-                color=f"{color}20",
-                offset=ft.Offset(0, 4)
-            )
-        e.control.update()
 
     def select_mode(self, mode):
         """Seleccionar modo de operación"""
@@ -921,31 +389,29 @@ class CallCenterApp:
         tipo_campana = "Campaña Existente" if self.modo_operacion == 'existente' else "Campaña Nueva"
         
         # Header
-        header = ft.Container(
-            content=ft.Column([
-                ft.Text(
-                    "🎯 Selecciona el Tipo de Análisis",
-                    size=32,
-                    weight=ft.FontWeight.BOLD,
-                    color=self.colors['text'],
-                    text_align=ft.TextAlign.CENTER
-                ),
-                ft.Text(
-                    f"Para tu {tipo_campana}",
-                    size=16,
-                    color="#495057",
-                    text_align=ft.TextAlign.CENTER
-                )
-            ], 
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=10),
-            padding=40
-        )
+        header = ft.Column([
+            ft.Text(
+                "🎯 Selecciona el Tipo de Análisis",
+                size=48,
+                weight=ft.FontWeight.BOLD,
+                color=self.colors['text'],
+                text_align=ft.TextAlign.CENTER
+            ),
+            ft.Text(
+                f"Para tu {tipo_campana}",
+                size=24,
+                weight=ft.FontWeight.W_500,
+                color="#495057",
+                text_align=ft.TextAlign.CENTER
+            )
+        ], 
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        spacing=8)
         
         # Cards de análisis en fila
         cards_row = ft.Row([
             # Análisis Básico
-            self.create_analysis_card(
+            self.create_analysis_specific_card(
                 title="⚡ Análisis Básico",
                 subtitle="Dimensionamiento rápido con Erlang C",
                 features=[
@@ -955,11 +421,12 @@ class CallCenterApp:
                     "• Ideal para análisis rápido"
                 ],
                 color=self.colors['primary'],
-                analysis_type='basico'
+                button_text="Seleccionar Básico",
+                on_click_handler=lambda e: self.select_analysis('basico')
             ),
             
             # Análisis Intermedio
-            self.create_analysis_card(
+            self.create_analysis_specific_card(
                 title="📊 Análisis Intermedio", 
                 subtitle="Simulación con abandonos incluidos",
                 features=[
@@ -969,11 +436,12 @@ class CallCenterApp:
                     "• Tiempo: 2-5 segundos"
                 ],
                 color=self.colors['secondary'],
-                analysis_type='intermedio'
+                button_text="Seleccionar Intermedio",
+                on_click_handler=lambda e: self.select_analysis('intermedio')
             ),
             
             # Análisis Avanzado
-            self.create_analysis_card(
+            self.create_analysis_specific_card(
                 title="🔬 Análisis Avanzado",
                 subtitle="Shrinkage + validación automática", 
                 features=[
@@ -983,64 +451,65 @@ class CallCenterApp:
                     "• Análisis más completo"
                 ],
                 color=self.colors['accent'],
-                analysis_type='avanzado'
+                button_text="Seleccionar Avanzado",
+                on_click_handler=lambda e: self.select_analysis('avanzado')
             )
         ], 
         alignment=ft.MainAxisAlignment.CENTER,
-        spacing=20)
+        spacing=50)
         
-        # Sidebar con información actual
-        sidebar = ft.Container(
-            content=ft.Column([
-                ft.Text("📋 Configuración Actual", size=18, weight=ft.FontWeight.BOLD),
-                ft.Container(
-                    content=ft.Text(f"🎯 {tipo_campana}", color="white"),
-                    bgcolor="#0d6efd",
-                    padding=10,
-                    border_radius=8
-                ),
-                ft.Divider(),
-                ft.ElevatedButton(
-                    "⬅️ Cambiar Tipo",
-                    width=200,
-                    on_click=lambda e: self.show_mode_selection()
-                ),
-                ft.ElevatedButton(
-                    "🚪 Cerrar Sesión", 
-                    width=200,
-                    bgcolor="#6c757d",
-                    color="white",
-                    on_click=lambda e: self.logout()
-                )
-            ], spacing=15),
-            width=220,
-            padding=20,
-            bgcolor="#ffffff",
-            border_radius=10
+        # Botón para volver
+        back_button = ft.ElevatedButton(
+            content=ft.Row([
+                ft.Icon("arrow_back", size=20),
+                ft.Text("Cambiar Modo de Operación", size=14, weight=ft.FontWeight.W_500)
+            ], spacing=8, alignment=ft.MainAxisAlignment.CENTER),
+            width=280,
+            height=50,
+            bgcolor="#000000",
+            color="white",
+            style=ft.ButtonStyle(
+                shape=ft.RoundedRectangleBorder(radius=12),
+                elevation={"": 4, "hovered": 8}
+            ),
+            on_click=lambda e: self.show_mode_selection()
         )
-        
+
         # Layout principal
-        main_row = ft.Row([
-            ft.Container(cards_row, expand=True),
-            sidebar
-        ], spacing=20)
-        
         main_content = ft.Column([
+            ft.Container(expand=True),  # Spacer superior
             header,
-            ft.Container(main_row, padding=ft.padding.symmetric(horizontal=20), expand=True)
-        ], expand=True)
+            ft.Container(height=25),    # Separación específica entre header y tarjetas
+            cards_row,
+            ft.Container(height=25),    # Separación específica entre tarjetas y botón
+            back_button,
+            ft.Container(expand=True)   # Spacer inferior
+        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10, expand=True)
         
         self.page.add(main_content)
         self.page.update()
 
-    def create_analysis_card(self, title, subtitle, features, color, analysis_type):
-        """Crear card de selección de análisis"""
+    def create_selection_card(self, title, subtitle, features, color, button_text, on_click_handler):
+        """Crear una card de selección profesional y reutilizable."""
+        
+        # Animación de hover
+        def animate_card_hover(e):
+            if e.data == "true":
+                e.control.shadow.blur_radius = 20
+                e.control.shadow.color = f"{color}40"
+                e.control.scale = ft.transform.Scale(1.03)
+            else:
+                e.control.shadow.blur_radius = 6
+                e.control.shadow.color = f"{color}26"
+                e.control.scale = ft.transform.Scale(1)
+            e.control.update()
+
         return ft.Container(
             content=ft.Column([
                 # Título
                 ft.Text(
                     title,
-                    size=18,
+                    size=24,
                     weight=ft.FontWeight.BOLD,
                     color=color,
                     text_align=ft.TextAlign.CENTER
@@ -1049,51 +518,150 @@ class CallCenterApp:
                 # Subtítulo
                 ft.Text(
                     subtitle,
-                    size=13,
+                    size=16,
                     color="#495057",
-                    text_align=ft.TextAlign.CENTER
+                    text_align=ft.TextAlign.CENTER,
+                    height=60 # Increased height for more space
                 ),
                 
+                ft.Divider(height=1, color="#eeeeee"),
+
                 # Características
                 ft.Container(
                     content=ft.Column([
-                        ft.Text(f"{title.split()[0]} Características:", weight=ft.FontWeight.BOLD, size=12),
-                        *[ft.Text(feature, size=11) for feature in features]
-                    ], spacing=3),
-                    margin=ft.margin.symmetric(vertical=12)
+                        *[ft.Row([
+                            ft.Icon(name="check_circle_outline", color=self.colors['success'], size=18),
+                            ft.Text(feature.replace("• ",""), size=14, expand=True)
+                        ], spacing=12) for feature in features]
+                    ], spacing=10),
+                    margin=ft.margin.symmetric(vertical=25),
+                    height=180 # Increased height for more features/spacing
                 ),
                 
                 # Botón
                 ft.ElevatedButton(
-                    f"{title.split()[0]} Usar {title.split()[1]} {title.split()[2]}",
-                    width=220,
-                    height=40,
+                    button_text,
+                    width=280,
+                    height=55,
                     bgcolor=color,
                     color="white", 
                     style=ft.ButtonStyle(
-                        shape=ft.RoundedRectangleBorder(radius=8),
-                        elevation={"": 2, "hovered": 6}
+                        shape=ft.RoundedRectangleBorder(radius=12),
+                        elevation={"hovered": 10}
                     ),
-                    on_click=lambda e: self.select_analysis(analysis_type)
+                    on_click=on_click_handler
                 )
             ], 
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=12),
+            spacing=20),
             
-            width=260,
-            padding=20,
+            width=350,
+            padding=30,
             bgcolor="#ffffff",
-            border_radius=12,
+            border_radius=18,
             border=ft.border.all(2, color),
             shadow=ft.BoxShadow(
-                spread_radius=0,
-                blur_radius=6,
-                color=f"{color}26",  # 15% opacity
-                offset=ft.Offset(0, 3)
+                spread_radius=3,
+                blur_radius=10,
+                color=f"{color}40",
+                offset=ft.Offset(0, 5)
             ),
-            animate=250,
-            on_hover=lambda e: self.animate_card_hover(e)
+            animate_scale=ft.Animation(300, "ease"),
+            on_hover=animate_card_hover
         )
+
+    def create_analysis_specific_card(self, title, subtitle, features, color, button_text, on_click_handler):
+        """Crear una card de selección profesional y reutilizable para el tipo de análisis."""
+        
+        # Animación de hover
+        def animate_card_hover(e):
+            if e.data == "true":
+                e.control.shadow.blur_radius = 20
+                e.control.shadow.color = f"{color}40"
+                e.control.scale = ft.transform.Scale(1.03)
+            else:
+                e.control.shadow.blur_radius = 6
+                e.control.shadow.color = f"{color}26"
+                e.control.scale = ft.transform.Scale(1)
+            e.control.update()
+
+        return ft.Container(
+            content=ft.Column([
+                # Título
+                ft.Text(
+                    title,
+                    size=28,
+                    weight=ft.FontWeight.BOLD,
+                    color=color,
+                    text_align=ft.TextAlign.CENTER
+                ),
+                
+                # Subtítulo
+                ft.Text(
+                    subtitle,
+                    size=16,
+                    color="#495057",
+                    text_align=ft.TextAlign.CENTER,
+                    height=None
+                ),
+                
+                ft.Divider(height=1, color="#eeeeee"),
+
+                # Características
+                ft.Container(
+                    content=ft.Column([
+                        *[ft.Row([
+                            ft.Icon(name="check_circle_outline", color=self.colors['success'], size=18),
+                            ft.Text(feature.replace("• ",""), size=15, expand=True)
+                        ], spacing=12) for feature in features]
+                    ], spacing=12),
+                    margin=ft.margin.symmetric(vertical=25),
+                    height=None,
+                    expand=True  # Permite que las características ocupen el espacio disponible
+                ),
+                
+                # Botón
+                ft.ElevatedButton(
+                    button_text,
+                    width=320,
+                    height=50,
+                    bgcolor=color,
+                    color="white", 
+                    style=ft.ButtonStyle(
+                        shape=ft.RoundedRectangleBorder(radius=12),
+                        elevation={"hovered": 10}
+                    ),
+                    on_click=on_click_handler
+                )
+            ], 
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=25),  # Spacing aumentado proporcionalmente
+            
+            width=450,
+            height=450,  # Altura aumentada proporcionalmente
+            padding=35,
+            bgcolor="#ffffff",
+            border_radius=15,
+            border=ft.border.all(2, color),
+            shadow=ft.BoxShadow(
+                spread_radius=2,
+                blur_radius=8,
+                color=f"{color}30",
+                offset=ft.Offset(0, 4)
+            ),
+            animate_scale=ft.Animation(300, "ease"),
+            on_hover=animate_card_hover
+        )
+
+    def animate_logo_hover(self, e):
+        """Animar logo al hover"""
+        if e.data == "true":  # Mouse enter
+            e.control.scale = 1.1
+            e.control.rotate = 0.1
+        else:  # Mouse leave
+            e.control.scale = 1.0
+            e.control.rotate = 0
+        e.control.update()
 
     def select_analysis(self, analysis_type):
         """Seleccionar tipo de análisis"""

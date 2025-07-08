@@ -2,16 +2,15 @@
 flet>=0.21.0
 pandas>=2.0.0
 numpy>=1.24.0
-sqlalchemy>=2.0.0
-pyodbc>=4.0.39
-
-# Simulation and calculations
 simpy>=4.0.1
 scipy>=1.11.0
+sqlalchemy>=2.0.0
+pyodbc>=4.0.39
 
 # Visualization and reporting
 plotly>=5.17.0
 openpyxl>=3.1.0
+kaleido==0.2.1
 
 # Configuration and utilities
 python-dotenv>=1.0.0

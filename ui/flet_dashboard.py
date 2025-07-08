@@ -10,6 +10,12 @@ from datetime import datetime, date, timedelta
 import logging
 import sys
 from pathlib import Path
+import io
+import base64
+import kaleido
+import plotly.io as pio
+import tempfile
+import os
 
 # Agregar path para imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -459,26 +465,20 @@ class MainDashboard:
     def create_summary_metrics(self, results):
         """Crear métricas resumen principales"""
         try:
-            # Extraer métricas principales (adaptar según estructura de results)
-            if 'scenarios' in results and results['scenarios']:
-                scenario = results['scenarios'][0]  # Primer escenario
-                
-                metrics = [
-                    ("👥 Agentes Requeridos", f"{scenario.get('agents_required', 0)}", self.colors['primary']),
-                    ("📞 Llamadas Analizadas", f"{results.get('total_calls', 0):,}", self.colors['secondary']),
-                    ("⏱️ SLA Logrado", f"{scenario.get('service_level', 0):.1f}%", self.colors['accent']),
-                    ("📊 Utilización", f"{scenario.get('utilization', 0):.1f}%", "#6c757d")
-                ]
-            else:
-                metrics = [
-                    ("📊 Estado", "Análisis Completado", self.colors['primary']),
-                    ("⏱️ Tiempo", "Procesado", self.colors['secondary']),
-                    ("✅ Resultado", "Disponible", self.colors['accent']),
-                    ("📈 Datos", "Cargados", "#6c757d")
-                ]
+            # Extraer métricas principales del resumen
+            summary = results.get('summary', {})
+            
+            metrics = [
+                ("👥 Agentes Recomendados", f"{summary.get('agentes_recomendados', 0)}", self.colors['primary']),
+                ("🎯 Escenario Base", summary.get('escenario_base', 'N/A').upper(), self.colors['secondary']),
+                ("✅ Precisión Modelo", f"{summary.get('precision_modelo', 0):.1f}%", self.colors['accent']),
+                ("📈 SLA Actual Est.", f"{summary.get('sla_actual_estimado', 0):.1f}%", "#6c757d"),
+                ("⏳ TME Promedio Real", f"{summary.get('tme_promedio_real', 0):.1f}s", "#6c757d"),
+                ("📞 Llamadas Analizadas", f"{summary.get('volumen_analizado', 0):,}", "#6c757d")
+            ]
             
             return ft.Container(
-                content=ft.Row([
+                content=ft.ResponsiveRow([
                     self.create_metric_card(title, value, color)
                     for title, value, color in metrics
                 ], alignment=ft.MainAxisAlignment.SPACE_AROUND),
@@ -514,6 +514,48 @@ class MainDashboard:
 
     def create_scenarios_tab(self, results):
         """Crear tab de escenarios"""
+        scenarios = results.get('dimensioning_results', {}).get('scenarios', {})
+        best_scenario_name = results.get('validation_results', {}).get('best_scenario', {}).get('nombre', '').lower()
+
+        scenario_cards = []
+        for name, data in scenarios.items():
+            is_recommended = name.lower() == best_scenario_name
+            border_color = self.colors['primary'] if is_recommended else "#e9ecef"
+            bg_color = "#f0f8ff" if is_recommended else "#ffffff" # Light blue for recommended
+
+            card_content = ft.Column([
+                ft.Text(
+                    f"{name.upper()} {'⭐ RECOMENDADO' if is_recommended else ''}",
+                    size=16,
+                    weight=ft.FontWeight.BOLD,
+                    color=self.colors['primary'] if is_recommended else self.colors['text']
+                ),
+                ft.Divider(),
+                ft.Text(f"👥 Agentes: {data.get('agents_with_shrinkage', 0)}", size=14),
+                ft.Text(f"📈 Utilización: {data.get('utilization', 0):.1f}%", size=14),
+                ft.Text(f"🎯 Nivel Servicio: {data.get('service_level', 0):.1f}%", size=14),
+                ft.Text(f"⏱️ Tiempo Espera: {data.get('average_wait_time', 0):.1f}s", size=14),
+                ft.Text(f"📊 Prob. Esperar: {data.get('probability_of_wait', 0):.1f}%", size=14),
+                ft.Text(f"🔥 Intensidad: {data.get('traffic_intensity', 0):.1f} Erlangs", size=14),
+            ], spacing=8)
+
+            scenario_cards.append(
+                ft.Container(
+                    content=card_content,
+                    padding=20,
+                    bgcolor=bg_color,
+                    border_radius=10,
+                    border=ft.border.all(2, border_color),
+                    shadow=ft.BoxShadow(
+                        spread_radius=0,
+                        blur_radius=4,
+                        color=f"{border_color}1a",
+                        offset=ft.Offset(0, 2)
+                    ),
+                    expand=True
+                )
+            )
+
         return ft.Container(
             content=ft.Column([
                 ft.Text(
@@ -523,27 +565,76 @@ class MainDashboard:
                     color=self.colors['text']
                 ),
                 ft.Text(
-                    "Resultados detallados por escenario",
+                    "Resultados detallados por escenario. El escenario recomendado se basa en la mayor precisión de TME.",
                     size=14,
                     color=self.colors['text_secondary']
                 ),
-                
-                # Contenido de escenarios (adaptar según estructura de results)
-                ft.Container(
-                    content=ft.Text(
-                        f"Datos disponibles: {len(results.get('scenarios', []))} escenarios",
-                        size=14
-                    ),
-                    padding=20,
-                    bgcolor="#f8f9fa",
-                    border_radius=8
-                )
+                ft.ResponsiveRow(scenario_cards, spacing=20, run_spacing=20)
             ], spacing=15),
             padding=20
         )
 
     def create_charts_tab(self, results):
         """Crear tab de gráficos"""
+        if not self.analysis_results:
+            return ft.Container(
+                content=ft.Text("No hay resultados de análisis para mostrar gráficos.", size=14),
+                padding=20,
+                bgcolor="#f8f9fa",
+                border_radius=8
+            )
+
+        scenarios = results.get('dimensioning_results', {}).get('scenarios', {})
+        targets = results.get('targets', {})
+        
+        chart_elements = []
+
+        if scenarios:
+            df_scenarios = pd.DataFrame.from_dict(scenarios, orient='index')
+            df_scenarios.index.name = 'Escenario'
+            df_scenarios = df_scenarios.reset_index()
+
+            # Gráfico 1: Agentes Requeridos por Escenario
+            fig1 = px.bar(
+                df_scenarios,
+                x='Escenario',
+                y='agents_with_shrinkage',
+                title='👥 Agentes Requeridos por Escenario',
+                labels={'agents_with_shrinkage': 'Agentes'},
+                color_discrete_sequence=[self.colors['primary']]
+            )
+            fig1.update_layout(title_x=0.5)
+            img_bytes1 = fig1.to_image(format="png")
+            encoded_img1 = base64.b64encode(img_bytes1).decode('utf-8')
+            chart_elements.append(ft.Image(src_base64=encoded_img1, fit=ft.ImageFit.CONTAIN, expand=True))
+
+            # Gráfico 2: Nivel de Servicio vs Tiempo de Espera
+            fig2 = px.scatter(
+                df_scenarios,
+                x='average_wait_time',
+                y='service_level',
+                text='Escenario',
+                size='agents_with_shrinkage',
+                title='🎯 Nivel de Servicio vs Tiempo de Espera',
+                labels={'average_wait_time': 'Tiempo de Espera (s)', 'service_level': 'Nivel de Servicio (%)'},
+                color_discrete_sequence=[self.colors['accent']]
+            )
+            fig2.update_traces(textposition='top center')
+            fig2.update_layout(title_x=0.5)
+            
+            # Añadir línea de SLA objetivo
+            if 'sla_target' in targets:
+                fig2.add_hline(y=targets['sla_target'], line_dash="dash", line_color="red",
+                               annotation_text=f"SLA Objetivo: {targets['sla_target']:.0f}%",
+                               annotation_position="bottom right")
+
+            img_bytes2 = fig2.to_image(format="png")
+            encoded_img2 = base64.b64encode(img_bytes2).decode('utf-8')
+            chart_elements.append(ft.Image(src_base64=encoded_img2, fit=ft.ImageFit.CONTAIN, expand=True))
+
+        else:
+            chart_elements.append(ft.Text("No hay datos de escenarios para generar gráficos.", size=14))
+
         return ft.Container(
             content=ft.Column([
                 ft.Text(
@@ -552,50 +643,99 @@ class MainDashboard:
                     weight=ft.FontWeight.BOLD,
                     color=self.colors['text']
                 ),
-                ft.Text("Gráficos interactivos de resultados", size=14, color=self.colors['text_secondary']),
-                
-                # Placeholder para gráficos Plotly
-                ft.Container(
-                    content=ft.Text("Gráficos Plotly se mostrarán aquí", size=14),
-                    padding=20,
-                    bgcolor="#f8f9fa",
-                    border_radius=8,
-                    height=300
-                )
+                ft.Text("Gráficos generados a partir de los resultados del análisis.", size=14, color=self.colors['text_secondary']),
+                ft.Column(chart_elements, expand=True)
             ], spacing=15),
-            padding=20
+            padding=20,
+            expand=True
         )
 
     def create_recommendations_tab(self, results):
         """Crear tab de recomendaciones"""
+        if not self.analysis_results:
+            return ft.Container(
+                content=ft.Text("No hay resultados de análisis para mostrar recomendaciones.", size=14),
+                padding=20,
+                bgcolor="#f8f9fa",
+                border_radius=8
+            )
+
+        recommendations = results.get('recommendations', {})
+        validation = results.get('validation_results', {})
+        best_scenario = validation.get('best_scenario', {})
+
+        recommendation_elements = []
+
+        # Recomendaciones de dimensionamiento
+        if recommendations.get('dimensionamiento'):
+            recommendation_elements.append(ft.Text("#### 🎯 Dimensionamiento", size=16, weight=ft.FontWeight.BOLD))
+            for rec in recommendations['dimensionamiento']:
+                recommendation_elements.append(ft.Container(
+                    content=ft.Column([
+                        ft.Text(f"**{rec.get('tipo', '')}:** {rec.get('descripcion', '')}", size=14, selectable=True),
+                        ft.Text(f"*Justificación: {rec.get('justificacion', '')}*", size=12, color=self.colors['text_secondary'], selectable=True)
+                    ], spacing=2),
+                    padding=ft.padding.only(left=10, bottom=5)
+                ))
+
+        # Recomendaciones operacionales
+        if recommendations.get('operacional'):
+            recommendation_elements.append(ft.Text("#### ⚙️ Operacionales", size=16, weight=ft.FontWeight.BOLD))
+            for rec in recommendations['operacional']:
+                recommendation_elements.append(ft.Container(
+                    content=ft.Column([
+                        ft.Text(f"**{rec.get('tipo', '')}:** {rec.get('descripcion', '')}", size=14, selectable=True),
+                        ft.Text(f"*Detalle: {rec.get('detalle', '')}*", size=12, color=self.colors['text_secondary'], selectable=True)
+                    ], spacing=2),
+                    padding=ft.padding.only(left=10, bottom=5)
+                ))
+
+        # Oportunidades de mejora
+        if recommendations.get('mejoras'):
+            recommendation_elements.append(ft.Text("#### 🚀 Oportunidades de Mejora", size=16, weight=ft.FontWeight.BOLD))
+            for rec in recommendations['mejoras']:
+                recommendation_elements.append(ft.Container(
+                    content=ft.Column([
+                        ft.Text(f"**{rec.get('tipo', '')}:** {rec.get('descripcion', '')}", size=14, selectable=True),
+                        ft.Text(f"*Sugerencia: {rec.get('sugerencia', '')}*", size=12, color=self.colors['text_secondary'], selectable=True)
+                    ], spacing=2),
+                    padding=ft.padding.only(left=10, bottom=5)
+                ))
+
+        # Validación del modelo
+        if best_scenario.get('nombre'):
+            precision = best_scenario.get('precision_tme', 0)
+            status_text = "Precisión del modelo: "
+            if precision > 80:
+                status_text += f"Excelente ({precision:.1f}%) ✅"
+                status_color = self.colors['success']
+            elif precision > 60:
+                status_text += f"Aceptable ({precision:.1f}%) ⚠️"
+                status_color = self.colors['accent']
+            else:
+                status_text += f"Requiere calibración ({precision:.1f}%) ❌"
+                status_color = self.colors['error']
+            
+            recommendation_elements.append(ft.Text("#### ✅ Validación del Modelo", size=16, weight=ft.FontWeight.BOLD))
+            recommendation_elements.append(ft.Text(status_text, size=14, color=status_color, selectable=True))
+            recommendation_elements.append(ft.Text(f"Escenario más preciso: {best_scenario.get('nombre', 'N/A').upper()}", size=12, color=self.colors['text_secondary'], selectable=True))
+
+        if not recommendation_elements:
+            recommendation_elements.append(ft.Text("No se generaron recomendaciones para este análisis.", size=14))
+
         return ft.Container(
             content=ft.Column([
                 ft.Text(
-                    "💡 Recomendaciones",
+                    "💡 Recomendaciones Inteligentes",
                     size=18,
                     weight=ft.FontWeight.BOLD,
                     color=self.colors['text']
                 ),
-                ft.Text("Sugerencias basadas en el análisis", size=14, color=self.colors['text_secondary']),
-                
-                # Recomendaciones dinámicas
-                ft.Container(
-                    content=ft.Column([
-                        ft.Row([
-                            ft.Icon("check_circle", color=self.colors['primary'], size=16),
-                            ft.Text("Análisis completado exitosamente", size=14)
-                        ], spacing=8),
-                        ft.Row([
-                            ft.Icon("info", color=self.colors['accent'], size=16),
-                            ft.Text("Revisa los escenarios para tomar decisiones", size=14)
-                        ], spacing=8)
-                    ], spacing=10),
-                    padding=20,
-                    bgcolor="#f8f9fa",
-                    border_radius=8
-                )
+                ft.Text("Sugerencias y validaciones basadas en el análisis de datos.", size=14, color=self.colors['text_secondary']),
+                ft.Column(recommendation_elements, spacing=10, expand=True)
             ], spacing=15),
-            padding=20
+            padding=20,
+            expand=True
         )
 
     def create_export_tab(self, results):
@@ -649,11 +789,63 @@ class MainDashboard:
 
     def export_excel(self):
         """Exportar resultados a Excel"""
-        self.show_success("📄 Exportación Excel en desarrollo...")
+        if not self.analysis_results:
+            self.show_error("❌ No hay resultados para exportar.")
+            return
+
+        try:
+            from reports.excel_generator import ExcelGenerator
+            generator = ExcelGenerator(self.analysis_results)
+            
+            # Crear un archivo temporal
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_file:
+                file_path = tmp_file.name
+                generator.generate_report(file_path)
+            
+            self.page.launch_url(f"file:///{file_path}")
+            self.show_success("✅ Reporte Excel generado y descargado.")
+
+        except Exception as e:
+            logger.error(f"Error exportando a Excel: {e}")
+            self.show_error(f"❌ Error al generar Excel: {e}")
 
     def export_csv(self):
         """Exportar resultados a CSV"""
-        self.show_success("📊 Exportación CSV en desarrollo...")
+        if not self.analysis_results:
+            self.show_error("❌ No hay resultados para exportar.")
+            return
+
+        try:
+            scenarios = self.analysis_results.get('dimensioning_results', {}).get('scenarios', {})
+            if not scenarios:
+                self.show_error("❌ No hay datos de escenarios para exportar a CSV.")
+                return
+
+            df_export = pd.DataFrame([
+                {
+                    'Escenario': name,
+                    'Agentes_Requeridos': data.get('agents_required', 0),
+                    'Agentes_Con_Shrinkage': data.get('agents_with_shrinkage', 0),
+                    'Nivel_Servicio_Pct': data.get('service_level', 0),
+                    'Tiempo_Espera_Seg': data.get('average_wait_time', 0),
+                    'Utilizacion_Pct': data.get('utilization', 0),
+                    'Probabilidad_Esperar_Pct': data.get('probability_of_wait', 0),
+                    'Intensidad_Trafico': data.get('traffic_intensity', 0)
+                }
+                for name, data in scenarios.items()
+            ])
+
+            # Crear un archivo temporal
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".csv", mode='w', newline='') as tmp_file:
+                file_path = tmp_file.name
+                df_export.to_csv(file_path, index=False)
+            
+            self.page.launch_url(f"file:///{file_path}")
+            self.show_success("✅ Datos CSV generados y descargados.")
+
+        except Exception as e:
+            logger.error(f"Error exportando a CSV: {e}")
+            self.show_error(f"❌ Error al generar CSV: {e}")
 
     def load_date_range(self):
         """Cargar rango de fechas disponibles"""
